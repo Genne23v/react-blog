@@ -1,70 +1,127 @@
-# Getting Started with Create React App
+# Web Server for Blog Site
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+\*This is from LinkedIn Learning React: Creating and Hosting a Full-stack Site.
+This express web server uses local MongoDB storage for blog articles, user comments and upvotes. React front-end blog site is HERE.
 
-## Available Scripts
+#
 
-In the project directory, you can run:
+## AWS Hosting
 
-### `npm start`
+1. Go to AWS Management Console. Then select EC@ in All services
+2. Create Instance -> Launch Instance
+3. Select Amazon Linux 2 AMI
+4. Click 'Review and Launch'
+5. Click 'Launch'
+6. 'Select an existing key pair or create a new key pair' pop-up display. Then select 'Create a new key pair' in a dropdown list.
+7. Enter Kay pair name and download the key pair. Then click 'Launch Instance'.
+8. Move the downloaded key to ~/.ssh (Create one if not existing)
+9. Go back to AWS console. Move to EC2 -> Running Instances.
+10. Select an instance that is just created. Copy 'Public DNS'.
+11. Update key file permission
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```
+chmod 400 ~/.ssh/my-blog-key.pem
+```
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+12. Enter below command on the terminal to access to AWS terminal
 
-### `npm test`
+```
+ssh -i ~/.ssh/my-blog-key.pem ec2-user@<copied-public-DNS>
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+#
 
-### `npm run build`
+## Setting Up an AWS Instance
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+1. In AWS terminal, enter below to set up Git
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```
+sudo yum install git
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+2. Install node version manager with below commands
 
-### `npm run eject`
+```
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+3. Activate nvm
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```
+. ~/.nvm/nvm.sh
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+4. Use nvm to install the latest version of Node.js
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+```
+nvm install <version-used-for-my-project>
+```
 
-## Learn More
+5. Get the latest npm packages
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```
+npm install -g npm@latest
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+6. Set up MongoDB
 
-### Code Splitting
+```
+sudo nano /etc/yum.repos.d/mongodb-org-5.0.repo
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+7. Add below to the file
 
-### Analyzing the Bundle Size
+```
+[mongodb-org-5.0]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/amazon/2/mongodb-org/5.0/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://www.mongodb.org/static/pgp/server-5.0.asc
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```
 
-### Making a Progressive Web App
+8. Install MongoDB
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```
+sudo yum install -y mongodb-org
 
-### Advanced Configuration
+sudo service mongod start
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+9. Add some initial data to MongoDB
 
-### Deployment
+#
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Running Full-stack App on AWS
 
-### `npm run build` fails to minify
+1. Copy GitHub repo on AWS
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```
+git clone <http-github-repo>
+
+npm install
+
+npm install -g forever
+
+forever start -c "npm start" .
+```
+
+2. You can check running repo with <code>forever list</code>
+
+```
+forever list
+```
+
+3. Map port to 80
+
+```
+sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-ports 8000
+```
+
+4. Go back to AWS browser console and select 'Security Group'
+5. Select the instance to create security group
+6. Click 'Inbound' tab and click EDIT
+7. Select Type - HTTP, Source - Anywhere
+8. Copy public DNS on main console and paste it to browser address bar to access
+9. Now app is running!
